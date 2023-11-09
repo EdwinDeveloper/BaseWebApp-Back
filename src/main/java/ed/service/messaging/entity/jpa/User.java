@@ -29,6 +29,9 @@ public class User {
     @Column(name = "email", columnDefinition = "VARCHAR(75)")
     private String email;
 
+    @Column(name = "password", columnDefinition = "VARCHAR(254)")
+    private String password;
+
     @Column(name = "status", columnDefinition = "VARCHAR(75)")
     private String status;
 

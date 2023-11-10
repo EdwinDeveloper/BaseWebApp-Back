@@ -20,7 +20,7 @@ public abstract class AbstractController {
         Map<String, Object> response = new HashMap<>();
         response.put("code", 400);
         response.put("data", error);
-        return badRequest(error);
+        return response;
     }
 
 }

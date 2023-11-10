@@ -1,6 +1,8 @@
 package ed.service.messaging.enums;
 
 public enum UserE {
+
+    //USER STATUS
     ACTIVE("ACTIVE");
 
     private final String status;

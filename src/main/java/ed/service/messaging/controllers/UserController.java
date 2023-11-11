@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,24 +43,30 @@ public class UserController extends AbstractController{
     @PostMapping(value = "/create")
     public Map<String, Object> createUser(@RequestBody UserDTO userDTO){
 
+        List<String> errorValidation = new ArrayList<>();
+
         if(userDTO.getFirstName() == null){
-            return badRequest("firstName is required");
+            errorValidation.add("firstName is required");
         }
 
         if(userDTO.getLastNameFirst() == null){
-            return badRequest("lastNameFirst is required");
+            errorValidation.add("lastNameFirst is required");
         }
 
         if(userDTO.getLastNameSecond() == null){
-            return badRequest("lastNameSecond is required");
+            errorValidation.add("lastNameSecond is required");
         }
 
         if(userDTO.getEmail() == null){
-            return badRequest("email is required");
+            errorValidation.add("email is required");
         }
 
         if(userDTO.getPassword() == null){
-            return badRequest("Password is required");
+            errorValidation.add("Password is required");
+        }
+
+        if(!errorValidation.isEmpty()){
+            return badRequest(errorValidation);
         }
 
         if(!PasswordUtil.isPasswordValid(userDTO.getPassword())){

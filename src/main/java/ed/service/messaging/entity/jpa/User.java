@@ -4,6 +4,7 @@ import ed.service.messaging.dto.UserDTO;
 import ed.service.messaging.enums.UserE;
 import ed.service.messaging.enums.UserTypes;
 import ed.service.messaging.listener.UserListener;
+import ed.service.messaging.security.TFA.TFAService;
 import ed.service.messaging.security.encrypt.EncryptorHandler;
 import ed.service.messaging.utils.DateUtil;
 
@@ -49,6 +50,9 @@ public class User {
     @Column(name = "aes_key", length = 512)
     private String aesKey;
 
+    @Column(name = "tfa")
+    private String tfa;
+
     public User(){
         id = UUID.randomUUID().toString();
         status = UserE.ACTIVE.getStatus();
@@ -68,6 +72,7 @@ public class User {
         aesKey = EncryptorHandler.createAESKey();
 
         type = userDTO.getType() != null ? userDTO.getType() : UserTypes.END_USER.getType();
+        tfa = TFAService.newGoogleAuthenticator().createCredentials().getKey();
     }
 
     public String getFirstName() {
@@ -148,5 +153,14 @@ public class User {
 
     public void setAesKey(String aesKey) {
         this.aesKey = aesKey;
+    }
+
+
+    public String getTfa() {
+        return tfa;
+    }
+
+    public void setTfa(String tfa) {
+        this.tfa = tfa;
     }
 }

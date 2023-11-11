@@ -102,6 +102,24 @@
       <version>3.12.0</version> <!-- Use the latest version -->
     </dependency>
 
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>core</artifactId>
+      <version>3.4.1</version> <!-- Replace with the latest version -->
+    </dependency>
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>javase</artifactId>
+      <version>3.4.1</version> <!-- Replace with the latest version -->
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.warrenstrange/googleauth -->
+    <dependency>
+      <groupId>com.warrenstrange</groupId>
+      <artifactId>googleauth</artifactId>
+      <version>1.5.0</version>
+    </dependency>
+
   </dependencies>
 
   <repositories>
@@ -135,5 +153,17 @@
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>10</source>
+                    <target>10</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

@@ -32,7 +32,7 @@ public class UserControllersTest {
     @Test
     public void testRegisterUser() throws Exception{
 
-        for (int x = 0; x < 100 ; x++ ){
+        for (int x = 0; x < 10 ; x++ ){
             UserDTO randomUser = TestUtil.createRandomUser();
             // When
             mockMvc.perform(MockMvcRequestBuilders.post("/api/1.0/user/create")

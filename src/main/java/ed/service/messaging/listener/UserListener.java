@@ -26,6 +26,7 @@ public class UserListener {
     public void prePersist(User user){
         injectDependencies();
         user.setPassword(encryptionService.encrypt(user.getPassword()));
+        user.setAesKey(encryptionService.encrypt(user.getAesKey()));
 
     }
 
@@ -34,6 +35,7 @@ public class UserListener {
     public void postLoad(User user) {
         injectDependencies();
         user.setPassword(encryptionService.decrypt(user.getPassword()));
+        user.setAesKey(encryptionService.decrypt(user.getAesKey()));
     }
 
 }

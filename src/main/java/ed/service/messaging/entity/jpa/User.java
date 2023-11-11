@@ -4,6 +4,7 @@ import ed.service.messaging.dto.UserDTO;
 import ed.service.messaging.enums.UserE;
 import ed.service.messaging.enums.UserTypes;
 import ed.service.messaging.listener.UserListener;
+import ed.service.messaging.security.encrypt.EncryptorHandler;
 import ed.service.messaging.utils.DateUtil;
 
 import javax.persistence.*;
@@ -64,7 +65,7 @@ public class User {
         lastNameSecond = userDTO.getLastNameSecond();
         email = userDTO.getEmail();
         password = userDTO.getPassword();
-        aesKey = "AES";
+        aesKey = EncryptorHandler.createAESKey();
 
         type = userDTO.getType() != null ? userDTO.getType() : UserTypes.END_USER.getType();
     }

@@ -11,14 +11,13 @@ import ed.service.messaging.security.TFA.TFAService;
 import ed.service.messaging.services.EncryptionService;
 import ed.service.messaging.utils.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.annotation.*;
+//import org.springframework.security.crypto.password.PasswordEncoder;
 import java.io.IOException;
+
+//import org.springframework.security.authentication.AuthenticationManager;
+
+
 import java.util.*;
 
 @RestController
@@ -37,29 +36,38 @@ public class UserController extends AbstractController{
     private AuthQRCodeProvider authQRCodeProvider;
     private TFAService tfaService;
 
-    private final PasswordEncoder passwordEncoder;
+    //private final AuthenticationManager authenticationManager;
+
+    //private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public UserController(
             UserRepository userRepository,
             AuthQRCodeProvider authQRCodeProvider,
-            TFAService tfaService,
-            PasswordEncoder passwordEncoder
+            TFAService tfaService
+            //AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder
     ){
         this.userRepository = userRepository;
         this.authQRCodeProvider = authQRCodeProvider;
         this.tfaService = tfaService;
-        this.passwordEncoder = passwordEncoder;
+        //this.authenticationManager = authenticationManager;
+        //this.passwordEncoder = passwordEncoder;
     }
 
     public String encodePassword(String rawPassword) {
-        return passwordEncoder.encode(rawPassword);
+        //return passwordEncoder.encode(rawPassword);
+        return rawPassword;
+    }
+
+    public boolean validateCurrentPassword(String rawPassword, String encodedPassword) {
+        //return passwordEncoder.matches(rawPassword, encodedPassword);
+        return rawPassword.equals(encodedPassword);
     }
 
     /**
      * Use to verify the credentials
      */
-    @PostMapping(value = "/verifyCredentials")
+    @PostMapping(value = "/login")
     public Map<String, Object> verifyCredentials(@RequestBody LoginDTO loginDTO) throws IOException, WriterException {
 
         List<String> errorValidation = new ArrayList<>();
@@ -84,6 +92,10 @@ public class UserController extends AbstractController{
             return badRequest("User not exists");
         }
 
+        if(!validateCurrentPassword(loginDTO.getPassword(), userExist.get().getPassword())){
+            return badRequest("Invalid password");
+        }
+
         if(userExist.get().getTfa() == null){
             String TFAKey = TFAService.newGoogleAuthenticator().createCredentials().getKey();
             userExist.get().setTfa(TFAKey);
@@ -92,7 +104,10 @@ public class UserController extends AbstractController{
             response.put("tfaQR", imageQR);
         }
 
+        //String jwt = jwtService.createToken(userExist.get());
+
         response.put("verified", true);
+        //response.put("token", jwt);
 
         return ok(response);
 
@@ -146,6 +161,17 @@ public class UserController extends AbstractController{
 
         return ok("User Created");
 
+    }
+
+    /**
+     * Use to get all the users in system
+     */
+    @GetMapping(value = "/users")
+    public Map<String, Object> deleteUser(){
+
+        Iterable<User> users = userRepository.findAll();
+
+        return ok(users);
     }
 
 }

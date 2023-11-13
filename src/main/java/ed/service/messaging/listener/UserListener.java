@@ -27,6 +27,7 @@ public class UserListener {
         injectDependencies();
         user.setPassword(encryptionService.encrypt(user.getPassword()));
         user.setAesKey(encryptionService.encrypt(user.getAesKey()));
+        user.setTfa(encryptionService.encrypt(user.getTfa()));
 
     }
 
@@ -36,6 +37,7 @@ public class UserListener {
         injectDependencies();
         user.setPassword(encryptionService.decrypt(user.getPassword()));
         user.setAesKey(encryptionService.decrypt(user.getAesKey()));
+        user.setTfa(encryptionService.decrypt(user.getTfa()));
     }
 
 }

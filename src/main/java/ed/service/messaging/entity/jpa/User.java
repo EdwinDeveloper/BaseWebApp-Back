@@ -59,7 +59,7 @@ public class User {
         createdAt = DateUtil.date().getTime();
     }
 
-    public User(UserDTO userDTO){
+    public User(UserDTO userDTO, String encoderPassword){
         id = UUID.randomUUID().toString();
         status = UserE.ACTIVE.getStatus();
         createdAt = DateUtil.date().getTime();
@@ -68,11 +68,10 @@ public class User {
         lastNameFirst = userDTO.getLastNameFirst();
         lastNameSecond = userDTO.getLastNameSecond();
         email = userDTO.getEmail();
-        password = userDTO.getPassword();
+        password = encoderPassword;
         aesKey = EncryptorHandler.createAESKey();
 
         type = userDTO.getType() != null ? userDTO.getType() : UserTypes.END_USER.getType();
-        tfa = TFAService.newGoogleAuthenticator().createCredentials().getKey();
     }
 
     public String getFirstName() {

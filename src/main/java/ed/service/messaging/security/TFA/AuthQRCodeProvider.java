@@ -23,17 +23,17 @@ public class AuthQRCodeProvider{
         return "image/png";
     }
 
-    public static String generateQRCodeDataUrl(GoogleAuthenticatorKey key) throws WriterException, IOException {
+    public static String generateQRCodeDataUrl(String key) throws WriterException, IOException {
         String otpAuthURL = generateOtpAuthURL(key);
         String imageBase64 = generateQRCodeBase64(otpAuthURL);
         return "data:image/png;base64," + imageBase64;
     }
 
-    private static String generateOtpAuthURL(GoogleAuthenticatorKey key) {
+    private static String generateOtpAuthURL(String key) {
         return "otpauth://totp/"
                 + URLEncoder.encode("messaging", StandardCharsets.UTF_8)
                 + ":" + URLEncoder.encode("messaging", StandardCharsets.UTF_8)
-                + "?secret=" + key.getKey();
+                + "?secret=" + key;
     }
 
     private static String generateQRCodeBase64(String text) throws WriterException, IOException {

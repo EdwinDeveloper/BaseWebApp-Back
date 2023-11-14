@@ -4,13 +4,21 @@ import com.google.zxing.WriterException;
 import ed.service.messaging.config.SpringApplicationContext;
 import ed.service.messaging.dto.LoginDTO;
 import ed.service.messaging.dto.UserDTO;
+import ed.service.messaging.dto.UserDTOR;
 import ed.service.messaging.entity.jpa.User;
 import ed.service.messaging.repository.UserRepository;
 import ed.service.messaging.security.TFA.AuthQRCodeProvider;
 import ed.service.messaging.security.TFA.TFAService;
 import ed.service.messaging.services.EncryptionService;
+import ed.service.messaging.services.JWTService;
 import ed.service.messaging.utils.PasswordUtil;
+import ed.service.messaging.utils.TokenUtil;
+import io.jsonwebtoken.Claims;
+import org.apache.http.Header;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 //import org.springframework.security.crypto.password.PasswordEncoder;
 import java.io.IOException;
@@ -36,38 +44,41 @@ public class UserController extends AbstractController{
     private AuthQRCodeProvider authQRCodeProvider;
     private TFAService tfaService;
 
-    //private final AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    //private final PasswordEncoder passwordEncoder;
+    private JWTService jwtService;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public UserController(
             UserRepository userRepository,
             AuthQRCodeProvider authQRCodeProvider,
-            TFAService tfaService
-            //AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder
+            TFAService tfaService,
+            AuthenticationManager authenticationManager,
+            PasswordEncoder passwordEncoder,
+            JWTService jwtService
     ){
         this.userRepository = userRepository;
         this.authQRCodeProvider = authQRCodeProvider;
         this.tfaService = tfaService;
-        //this.authenticationManager = authenticationManager;
-        //this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public String encodePassword(String rawPassword) {
-        //return passwordEncoder.encode(rawPassword);
-        return rawPassword;
+        return passwordEncoder.encode(rawPassword);
     }
 
     public boolean validateCurrentPassword(String rawPassword, String encodedPassword) {
-        //return passwordEncoder.matches(rawPassword, encodedPassword);
-        return rawPassword.equals(encodedPassword);
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
     /**
      * Use to verify the credentials
      */
-    @PostMapping(value = "/login")
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> verifyCredentials(@RequestBody LoginDTO loginDTO) throws IOException, WriterException {
 
         List<String> errorValidation = new ArrayList<>();
@@ -104,9 +115,10 @@ public class UserController extends AbstractController{
             response.put("tfaQR", imageQR);
         }
 
-        //String jwt = jwtService.createToken(userExist.get());
+        String jwt = jwtService.generateToken(userExist.get());
 
         response.put("verified", true);
+        response.put("token", jwt);
         //response.put("token", jwt);
 
         return ok(response);
@@ -116,8 +128,10 @@ public class UserController extends AbstractController{
     /**
      * Use to create the user record
      */
-    @PostMapping(value = "/create")
-    public Map<String, Object> createUser(@RequestBody UserDTO userDTO) throws IOException, WriterException {
+    @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> createUser(
+            @RequestBody UserDTO userDTO
+    ) throws IOException, WriterException {
 
         List<String> errorValidation = new ArrayList<>();
 
@@ -166,12 +180,94 @@ public class UserController extends AbstractController{
     /**
      * Use to get all the users in system
      */
-    @GetMapping(value = "/users")
-    public Map<String, Object> deleteUser(){
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> getUsers(){
 
         Iterable<User> users = userRepository.findAll();
 
-        return ok(users);
+        List<UserDTOR> usersList = new ArrayList<>();
+
+        users.forEach(user -> {
+            UserDTOR userDTOR = new UserDTOR(user);
+            usersList.add(userDTOR);
+        });
+
+        return ok(usersList);
+    }
+
+    /**
+     * Use to delete one user by the id
+     */
+    @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> deleteUser(
+            @PathVariable("id") String id,
+            @RequestHeader("Authorization") String authorizationHeader
+    ){
+        Claims extracted = jwtService.extractClaims(TokenUtil.extractToken(authorizationHeader));
+
+        Optional<User> user = userRepository.findById(id);
+
+        if(!user.isPresent()){
+            return badRequest("User is not in the system");
+        }
+
+        if(extracted.getSubject().equals(user.get().getEmail())){
+            return badRequest("You can't delete your own account");
+        }
+
+        userRepository.deleteById(id);
+
+        return ok(204, "user deleted");
+    }
+
+    /**
+     * Use to delete one user by the id
+     */
+    @PutMapping(value = "/update", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> updateUser(
+            @RequestBody UserDTOR userDTOR
+    ) {
+
+        Optional<User> user = userRepository.findById(userDTOR.getId());
+
+        if(!user.isPresent()){
+            return badRequest("User doesn't exist");
+        }
+
+        User userDB = user.get();
+        List<String> errorValidation = new ArrayList<>();
+
+        if(userDTOR.getEmail() == null){
+            errorValidation.add("email is required");
+        }
+
+        if(userDTOR.getFirstName() == null){
+            errorValidation.add("firstName is required");
+        }
+
+        if(userDTOR.getLastNameFirst() == null){
+            errorValidation.add("lastNameFirst is required");
+        }
+
+        if(userDTOR.getLastNameSecond() == null){
+            errorValidation.add("lastNameSecond is required");
+        }
+
+        if(!errorValidation.isEmpty()){
+            return badRequest(errorValidation);
+        }
+
+        userDB.setFirstName(userDTOR.getFirstName());
+        userDB.setLastNameFirst(userDTOR.getLastNameFirst());
+        userDB.setLastNameSecond(userDTOR.getLastNameSecond());
+
+        User userUpdated = userRepository.save(userDB);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "user update");
+        response.put("user", userUpdated);
+
+        return ok( response);
     }
 
 }

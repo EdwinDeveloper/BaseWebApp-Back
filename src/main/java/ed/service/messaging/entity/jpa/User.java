@@ -74,6 +74,14 @@ public class User {
         type = userDTO.getType() != null ? userDTO.getType() : UserTypes.END_USER.getType();
     }
 
+    public String getId(){
+        return id;
+    }
+
+    public void setId(String id){
+        this.id = id;
+    }
+
     public String getFirstName() {
         return firstName;
     }

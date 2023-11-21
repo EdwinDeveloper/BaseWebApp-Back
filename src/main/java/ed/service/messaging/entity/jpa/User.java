@@ -2,9 +2,7 @@ package ed.service.messaging.entity.jpa;
 
 import ed.service.messaging.dto.UserDTO;
 import ed.service.messaging.enums.UserE;
-import ed.service.messaging.enums.UserTypes;
 import ed.service.messaging.listener.UserListener;
-import ed.service.messaging.security.TFA.TFAService;
 import ed.service.messaging.security.encrypt.EncryptorHandler;
 import ed.service.messaging.utils.DateUtil;
 
@@ -38,16 +36,13 @@ public class User {
     @Column(name = "status", columnDefinition = "VARCHAR(75)")
     private String status;
 
-    @Column(name = "type", columnDefinition = "VARCHAR(75)")
-    private String type;
-
     @Column(name = "created_at")
     private Long createdAt;
 
     @Column(name = "updated_at")
     private Long updatedAt;
 
-    @Column(name = "aes_key", length = 512)
+    @Column(name = "aes_key")
     private String aesKey;
 
     @Column(name = "tfa")
@@ -70,8 +65,6 @@ public class User {
         email = userDTO.getEmail();
         password = encoderPassword;
         aesKey = EncryptorHandler.createAESKey();
-
-        type = userDTO.getType() != null ? userDTO.getType() : UserTypes.END_USER.getType();
     }
 
     public String getId(){
@@ -128,14 +121,6 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public Long getCreatedAt() {

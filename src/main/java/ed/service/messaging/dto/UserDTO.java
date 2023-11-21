@@ -9,8 +9,6 @@ public class UserDTO {
     private String lastNameSecond;
     private String email;
 
-    private String type;
-
     private String password;
 
 
@@ -52,13 +50,5 @@ public class UserDTO {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 }

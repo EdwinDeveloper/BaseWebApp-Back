@@ -7,23 +7,17 @@ import ed.service.messaging.dto.UserDTO;
 import ed.service.messaging.dto.UserDTOR;
 import ed.service.messaging.entity.jpa.User;
 import ed.service.messaging.repository.UserRepository;
-import ed.service.messaging.security.TFA.AuthQRCodeProvider;
-import ed.service.messaging.security.TFA.TFAService;
 import ed.service.messaging.services.EncryptionService;
 import ed.service.messaging.services.JWTService;
 import ed.service.messaging.utils.PasswordUtil;
 import ed.service.messaging.utils.TokenUtil;
 import io.jsonwebtoken.Claims;
-import org.apache.http.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-//import org.springframework.security.crypto.password.PasswordEncoder;
 import java.io.IOException;
-
-//import org.springframework.security.authentication.AuthenticationManager;
 
 
 import java.util.*;
@@ -41,8 +35,6 @@ public class UserController extends AbstractController{
     }
 
     private UserRepository userRepository;
-    private AuthQRCodeProvider authQRCodeProvider;
-    private TFAService tfaService;
 
     private final AuthenticationManager authenticationManager;
 
@@ -53,15 +45,11 @@ public class UserController extends AbstractController{
     @Autowired
     public UserController(
             UserRepository userRepository,
-            AuthQRCodeProvider authQRCodeProvider,
-            TFAService tfaService,
             AuthenticationManager authenticationManager,
             PasswordEncoder passwordEncoder,
             JWTService jwtService
     ){
         this.userRepository = userRepository;
-        this.authQRCodeProvider = authQRCodeProvider;
-        this.tfaService = tfaService;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -73,6 +61,11 @@ public class UserController extends AbstractController{
 
     public boolean validateCurrentPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    @GetMapping(value = "/health", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> health(){
+        return ok("Service ok");
     }
 
     /**
@@ -105,14 +98,6 @@ public class UserController extends AbstractController{
 
         if(!validateCurrentPassword(loginDTO.getPassword(), userExist.get().getPassword())){
             return badRequest("Invalid password");
-        }
-
-        if(userExist.get().getTfa() == null){
-            String TFAKey = TFAService.newGoogleAuthenticator().createCredentials().getKey();
-            userExist.get().setTfa(TFAKey);
-            userRepository.save(userExist.get());
-            String imageQR = AuthQRCodeProvider.generateQRCodeDataUrl(TFAKey);
-            response.put("tfaQR", imageQR);
         }
 
         String jwt = jwtService.generateToken(userExist.get());
@@ -231,7 +216,7 @@ public class UserController extends AbstractController{
         Optional<User> user = userRepository.findById(userDTOR.getId());
 
         if(!user.isPresent()){
-            return badRequest("User doesn't exist");
+            return badRequest("User id is not valid or doesn't exist");
         }
 
         User userDB = user.get();

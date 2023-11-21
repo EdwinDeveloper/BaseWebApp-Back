@@ -7,13 +7,13 @@ public enum UserTypes {
     INTEGRATOR_USER("INTEGRATOR_USER"),
     ADMIN_USER("ADMIN_USER");
 
-    private final String type;
+    private final String userType;
 
     UserTypes(String type) {
-        this.type = type;
+        this.userType = type;
     }
 
     public String getType(){
-        return type;
+        return userType;
     }
 }

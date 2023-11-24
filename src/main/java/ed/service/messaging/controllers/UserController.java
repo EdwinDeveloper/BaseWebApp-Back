@@ -7,6 +7,8 @@ import ed.service.messaging.dto.UserDTO;
 import ed.service.messaging.dto.UserDTOR;
 import ed.service.messaging.entity.jpa.User;
 import ed.service.messaging.repository.UserRepository;
+import ed.service.messaging.security.TFA.AuthQRCodeProvider;
+import ed.service.messaging.security.TFA.TFAService;
 import ed.service.messaging.services.EncryptionService;
 import ed.service.messaging.services.JWTService;
 import ed.service.messaging.utils.PasswordUtil;
@@ -42,17 +44,21 @@ public class UserController extends AbstractController{
 
     private final PasswordEncoder passwordEncoder;
 
+    private TFAService tfaService;
+
     @Autowired
     public UserController(
             UserRepository userRepository,
             AuthenticationManager authenticationManager,
             PasswordEncoder passwordEncoder,
-            JWTService jwtService
+            JWTService jwtService,
+            TFAService tfaService
     ){
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.tfaService = tfaService;
     }
 
     public String encodePassword(String rawPassword) {
@@ -100,11 +106,19 @@ public class UserController extends AbstractController{
             return badRequest("Invalid password");
         }
 
+        if(userExist.get().getTfa() == null){
+            String TFAKey = TFAService.newGoogleAuthenticator().createCredentials().getKey();
+            userExist.get().setTfa(TFAKey);
+            userRepository.save(userExist.get());
+            String imageQR = AuthQRCodeProvider.generateQRCodeDataUrl(TFAKey);
+            response.put("tfaQR", imageQR);
+        }
+
         String jwt = jwtService.generateToken(userExist.get());
 
         response.put("verified", true);
         response.put("token", jwt);
-        //response.put("token", jwt);
+
 
         return ok(response);
 

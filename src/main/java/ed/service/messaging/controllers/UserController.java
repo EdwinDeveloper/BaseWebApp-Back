@@ -6,6 +6,7 @@ import ed.service.messaging.dto.LoginDTO;
 import ed.service.messaging.dto.UserDTO;
 import ed.service.messaging.dto.UserDTOR;
 import ed.service.messaging.entity.jpa.User;
+import ed.service.messaging.exception.CustomHttpException;
 import ed.service.messaging.repository.UserRepository;
 import ed.service.messaging.security.TFA.AuthQRCodeProvider;
 import ed.service.messaging.security.TFA.TFAService;
@@ -114,14 +115,57 @@ public class UserController extends AbstractController{
             response.put("tfaQR", imageQR);
         }
 
-        String jwt = jwtService.generateToken(userExist.get());
-
         response.put("verified", true);
-        response.put("token", jwt);
-
 
         return ok(response);
 
+    }
+
+    @PostMapping(value = "/login_check", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> loginCheck(@RequestBody LoginDTO loginDTO){
+        List<String> errorValidation = new ArrayList<>();
+
+        if(loginDTO.getEmail() == null){
+            errorValidation.add("email is required");
+        }
+
+        if(loginDTO.getPassword() == null){
+            errorValidation.add("password is required");
+        }
+
+        if(loginDTO.getOtp() == null){
+            errorValidation.add("otp is required");
+        }
+
+        if(!errorValidation.isEmpty()){
+            return badRequest(errorValidation);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+
+        try{
+            Optional<User> userExist = userRepository.findByEmail(loginDTO.getEmail());
+
+            if(!userExist.isPresent()){
+                return badRequest("User not exists");
+            }
+
+            if(!validateCurrentPassword(loginDTO.getPassword(), userExist.get().getPassword())){
+                return badRequest("Invalid password");
+            }
+
+            TFAService.validateUserOtp(userExist.get(), loginDTO.getOtp());
+
+            String jwt = jwtService.generateToken(userExist.get());
+
+            response.put("verified", true);
+            response.put("token", jwt);
+        }catch (CustomHttpException e) {
+            response.put("error", e.getServerExceptionMessage());
+            return notOk(e.getServerExceptionCode(),response);
+        }
+
+        return ok(response);
     }
 
     /**

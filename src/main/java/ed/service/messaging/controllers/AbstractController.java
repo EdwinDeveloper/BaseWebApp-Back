@@ -23,6 +23,13 @@ public abstract class AbstractController {
         return response;
     }
 
+    public Map<String, Object> notOk(int code, Object object){
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", code);
+        response.put("data", object);
+        return response;
+    }
+
     public Map<String, Object> badRequest(Object error) {
         Map<String, Object> response = new HashMap<>();
         response.put("code", 400);

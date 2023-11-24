@@ -37,13 +37,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         http
                 .authorizeRequests()
-                .antMatchers("/api/1.0/user/create", "/api/1.0/user/login", "/api/1.0/user/health").permitAll()
+                .antMatchers("/api/1.0/user/create", "/api/1.0/user/login", "/api/1.0/user/login_check", "/api/1.0/user/health").permitAll()
                 .anyRequest().authenticated()
                     .and()
                 .logout()
                 .permitAll()
                     .and()
-                .csrf().ignoringAntMatchers("/api/1.0/user/create", "/api/1.0/user/login")
+                .csrf().ignoringAntMatchers("/api/1.0/user/create", "/api/1.0/user/login", "/api/1.0/user/login_check")
                 .and()
                 .cors()
                 .and()

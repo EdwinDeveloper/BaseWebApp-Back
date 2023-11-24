@@ -5,6 +5,8 @@ public class LoginDTO {
     private String email;
     private String password;
 
+    private String otp;
+
     public String getEmail() {
         return email;
     }
@@ -19,5 +21,13 @@ public class LoginDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getOtp(){
+        return otp;
+    }
+
+    public void setOtp(String otp){
+        this.otp = otp;
     }
 }

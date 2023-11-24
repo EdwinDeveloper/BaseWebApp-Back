@@ -19,9 +19,6 @@ public class TFAService {
     }
 
     public static void validateUserOtp(User user, String otp) throws CustomHttpException {
-        if (System.getenv("APP_ENV").equals("dev")) {
-            return;
-        }
 
         if (otp == null || otp.isEmpty()) {
             throw new CustomHttpException(400, "Sin código OTP");
